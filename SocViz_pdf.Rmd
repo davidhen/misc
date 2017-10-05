@@ -36,7 +36,8 @@ ubdc_palette <- c("#f07818", "#30a848", "#f0f018", "#c0d830", "#d84890", "#9060a
 
 #Chapter 4.3
 ##Facets and small multiples
-##Also shows `geom_smooth`
+
+Also shows `geom_smooth`
 
 ```{r}
 p <- ggplot(data = gapminder, mapping = aes(x = year, y = gdpPercap, color = continent))
@@ -147,7 +148,7 @@ ggplot(midwest, aes(area)) +
   geom_density()
 ```
 
-Multi-factor plot
+##Multi-factor plot
 
 ```{r multi}
 ggplot(midwest, aes(area, fill = state, color = state)) +
@@ -161,7 +162,7 @@ ggplot(midwest, aes(area, fill = state, color = state)) +
 #helpful for busy plots like below
 ```
 
-Proportional density estimate scaled to max 1
+##Proportional density estimate scaled to max 1
 
 ```{r prop_dens}
 ggplot(midwest, aes(area, fill = state, color = state)) +
@@ -175,7 +176,7 @@ tidy up
 rm(list = c("midwest", "p", "rel_by_region", "ubdc_colours"))
 ```
 
-#Chapter 5.1
+#Chapter 5.1 Continous variables by group or category
 
 ```{r}
 organdata <- organdata
@@ -184,12 +185,7 @@ organdata %>%
   head(., n = 15)
 ```
 
-
-
-
-##Continous variables by group or category
-
-###Ordered boxplot
+##Ordered boxplot
 
 ```{r}
 p <- ggplot(organdata, aes(x = reorder(country, donors, na.rm = TRUE),
@@ -201,7 +197,7 @@ p + geom_boxplot() +
 
 The reorder() function takes two required arguments. The first is the categorical variable or factor that we want to reorder. In this case, that's country. The second is the variable we want to reorder it by. Here that is the donation rate, donors. The third and optional argument to reorder() is the function you want to use as a summary statistic. By default, that is, if you only give reorder() the first two required arguments, it will reorder the categories of your first variable by the mean value of the second. You can name any sensible function you like to reorder the categorical variable (e.g., median, or sd).
 
-###Ordered boxplot filled by second categorical variable
+##Ordered boxplot filled by second categorical variable
 
 ```{r}
 p <- ggplot(organdata, aes(x = reorder(country, donors, na.rm = TRUE),
@@ -221,6 +217,8 @@ p + geom_violin() +
         plot.caption = element_text(color="#AAAAAA", size=10))
 ```
 
+##Jitter
+
 Same but using points (and jitter). Use "color" instead of "fill" for points. Useful when number of obsrvations within each category is small. 
 
 ```{r}
@@ -236,7 +234,7 @@ p + geom_jitter(position = position_jitter(width=0.15)) +
 ```
 
 
-###Clevland dotplot
+##Clevland dotplot
 
 Good alternative to a ba chart (`stat = "identity"`, or `geom_col()`)
 
@@ -270,7 +268,7 @@ p +
   theme(legend.position = "top")
 ```
 
-Alternative using facet
+##Clevland using facet
 
 ```{r fac, fig.height=6, fig.width=6}
 p <- ggplot(data = by_country,
@@ -284,6 +282,8 @@ p + geom_point(size = 3) +
 
 
 ```
+
+##Clevland with error bars
 
 Add bars with e.g. standard deviation
 
@@ -361,9 +361,43 @@ p +
         plot.caption = element_text(color="#AAAAAA", size=10))
 ```
 
+#5.3 Labelling outliers
 
+## Use a different (filtered) dataframe for the labels
 
+```{r outliers_1}
+ggplot(by_country, aes(gdp, health)) +
+  geom_point() +
+  geom_text_repel(data = by_country %>% filter(gdp > 25000),
+                  mapping = aes(label = country))
+```
 
+##Label outliers on multiple conditions
+
+```{r outliers_2, fig.width=6, fig.height=6}
+ggplot(by_country, aes(gdp, health)) +
+  geom_point() +
+  geom_text_repel(data = by_country %>% 
+                    filter(gdp > 25000 | health < 1500 | country %in% "Belgium"),
+                  mapping = aes(label = country))
+```
+
+##Label outliers using a dummy variable
+
+```{r outliers_3, warning=FALSE, fig.height=6}
+#Create dummy variable
+organdata$ind <- organdata$ccode %in% c("Ita", "Spa") & organdata$year > 1998
+
+ggplot(organdata, aes(roads, donors, color = ind)) + #color by dummy variable
+  geom_point() +
+  geom_text_repel(data = organdata %>% filter(ind == TRUE),
+                  mapping = aes(label = ccode)) +
+  guides(color = FALSE) +
+  scale_color_lancet()
+
+```
+
+#5.4 Write and draw in the plot area
 
 
 
