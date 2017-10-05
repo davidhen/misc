@@ -1,0 +1,11 @@
+base
+socviz
+ggplot2
+cowplot
+ggthemes
+ggsci
+dplyr
+gapminder
+extrafont
+bindrcpp
+ggrepel

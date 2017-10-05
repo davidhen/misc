@@ -1,0 +1,369 @@
+---
+title: "SocViz"
+output:
+  pdf_document:
+    df_print: kable
+    highlight: haddock
+    latex_engine: lualatex
+documentclass: article
+header_includes:
+- \usepackage{fontspec}
+- \setmainfont{RobotoCondensed-Light}
+---
+
+```{r opts, echo=FALSE}
+#dev needs set to allow extarfonts
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE, dev = "cairo_pdf")
+```
+
+
+```{r, message=FALSE}
+library(socviz)
+library(ggplot2)
+library(cowplot)
+library(ggthemes)
+library(ggsci)
+library(dplyr)
+library(gapminder)
+library(extrafont)
+```
+
+
+```{r set_palette}
+ubdc_palette <- c("#f07818", "#30a848", "#f0f018", "#c0d830", "#d84890", "#9060a8")
+```
+
+
+#Chapter 4.3
+##Facets and small multiples
+##Also shows `geom_smooth`
+
+```{r}
+p <- ggplot(data = gapminder, mapping = aes(x = year, y = gdpPercap, color = continent))
+
+p + 
+  geom_line(color="gray70", aes(group = country)) +
+  geom_smooth(size = 1.1, method = "loess", se = FALSE) +
+  scale_y_log10(labels=scales::dollar) + 
+  theme(axis.text.x = element_text(angle = 45, size = 10, hjust = 1, vjust = 1)) +
+  facet_wrap(~ continent, ncol = 5) +
+  labs(x = "Year",
+       y = "GDP per capita",
+       title = "GDP per capita on Five Continents") +
+  scale_color_manual(values = ubdc_palette)
+```
+
+The `facet_wrap()` function is best used when you want a series of small multiples based on a single categorical variable. Your panels will be laid out in order and then wrapped into a grid. If you wish you can specify the number or rows or the number of columns in the resulting layout. Facets can be more complex than this. For instance, you might want to cross-classify some data by two categorical variables. In that case you should try `facet_grid()` instead. This function will lay out your plot in a true two-dimensional arrangement, instead of a series of panels wrapped into a grid.
+
+```{r}
+p <- ggplot(data = diamonds, mapping = aes(x = carat, y = price))
+
+p + geom_smooth(alpha = 0.3, color = "navyblue") + 
+  facet_grid(cut ~ color) #or (~ cut + color) or (cut ~ color + clarity) 
+
+```
+
+##Proportional bar charts (with extrafonts added)
+
+Need to summarise data first!!
+
+```{r}
+rel_by_region <- 
+  gss_sm %>%  #from socviz package
+  group_by(bigregion, religion) %>%
+  summarize(N = n()) %>%
+  mutate(freq = N / sum(N),
+         pct = round((freq*100), 1))
+rel_by_region
+```
+
+
+Sanity check
+
+```{r}
+rel_by_region %>% 
+  group_by(bigregion) %>%
+  summarize(total = sum(pct))
+```
+
+Rounding errors only, now plot
+
+```{r}
+p <- ggplot(rel_by_region, 
+            aes(
+              x = bigregion, 
+              y = freq,         #I have changed this from percent and using scale_y_percent below
+              fill = religion))
+
+ubdc_colours <- p + 
+  geom_bar(position = "dodge", stat = "identity") +
+  labs(x = "Region",
+       y = "Percent", 
+       fill = "Religion",
+       title = "Self-reported religion",
+       subtitle = "by large Geogrpahic area of the USA",
+       caption = "based on plot created in Data Visualization for Social Science") +
+  theme_hc(base_size = 12, base_family = "Roboto") +
+  scale_y_continuous(labels = scales::percent) + #Using freq instead of percent variable
+  theme(legend.position = "bottom",
+        plot.subtitle = element_text(color="#666666"),
+        plot.title = element_text(family="Roboto Condensed", face = "bold"),
+        plot.caption = element_text(color="#AAAAAA", size=10)) +
+  scale_fill_manual(values = ubdc_palette)
+ubdc_colours
+```
+
+#4. 7 Histograms and Freqpoly
+##Basic hist and grouping
+
+```{r mid}
+midwest <- midwest
+#midwest built in to ggplot - good to see it in Rstudio View()
+```
+
+
+
+```{r midwest}
+ggplot(midwest, aes(area)) +
+  geom_histogram(bins = 10)
+```
+
+Hist on plot
+
+```{r hist_2}
+midwest %>% 
+  filter(state %in% c("OH", "WI")) %>% 
+  ggplot(aes(percollege, fill = state)) +
+  geom_histogram(alpha = 0.4, bins = 20) +
+  scale_fill_aaas()
+```
+
+##Kernal density plots
+
+Basic plot
+
+```{r basic_dens}
+ggplot(midwest, aes(area)) +
+  geom_density()
+```
+
+Multi-factor plot
+
+```{r multi}
+ggplot(midwest, aes(area, fill = state, color = state)) +
+  geom_density(alpha = 0.3) +
+  scale_fill_aaas()
+
+#alternative
+# ... aes(area, color = state)) +
+#     geom_line(stat = "density")
+#
+#helpful for busy plots like below
+```
+
+Proportional density estimate scaled to max 1
+
+```{r prop_dens}
+ggplot(midwest, aes(area, fill = state, color = state)) +
+  geom_density(alpha = 0.3, aes(y = ..scaled..)) +
+  scale_fill_aaas()
+```
+
+tidy up
+
+```{r tidy}
+rm(list = c("midwest", "p", "rel_by_region", "ubdc_colours"))
+```
+
+#Chapter 5.1
+
+```{r}
+organdata <- organdata
+organdata %>% 
+  select(1:7) %>% 
+  head(., n = 15)
+```
+
+
+
+
+##Continous variables by group or category
+
+###Ordered boxplot
+
+```{r}
+p <- ggplot(organdata, aes(x = reorder(country, donors, na.rm = TRUE),
+                           y = donors))
+p + geom_boxplot() +
+  labs(x = NULL) +
+  coord_flip()
+```
+
+The reorder() function takes two required arguments. The first is the categorical variable or factor that we want to reorder. In this case, that's country. The second is the variable we want to reorder it by. Here that is the donation rate, donors. The third and optional argument to reorder() is the function you want to use as a summary statistic. By default, that is, if you only give reorder() the first two required arguments, it will reorder the categories of your first variable by the mean value of the second. You can name any sensible function you like to reorder the categorical variable (e.g., median, or sd).
+
+###Ordered boxplot filled by second categorical variable
+
+```{r}
+p <- ggplot(organdata, aes(x = reorder(country, donors, na.rm = TRUE),
+                           y = donors, fill = world))
+p + geom_violin() +
+  labs(x = NULL, 
+       y = "Donors",
+       title = "Distribution of Organ Donors 1991 - 2002",
+       subtitle = "by Country and economic classification",
+       caption = "Using theme_hc()", 
+       fill = "Economic classification") +
+  coord_flip() +
+  scale_fill_manual(values = ubdc_palette) +
+  theme(legend.position = "bottom",
+        plot.subtitle = element_text(color="#666666"),
+        plot.title = element_text(family="Roboto Condensed", face = "bold"),
+        plot.caption = element_text(color="#AAAAAA", size=10))
+```
+
+Same but using points (and jitter). Use "color" instead of "fill" for points. Useful when number of obsrvations within each category is small. 
+
+```{r}
+p <- ggplot(data = organdata,
+            mapping = aes(x = reorder(country, donors, na.rm=TRUE),
+                          y = donors, color = world))
+
+p + geom_jitter(position = position_jitter(width=0.15)) +
+  labs(x=NULL) +
+  coord_flip() +
+  scale_color_manual(values = ubdc_palette) +
+  theme(legend.position = "top")
+```
+
+
+###Clevland dotplot
+
+Good alternative to a ba chart (`stat = "identity"`, or `geom_col()`)
+
+For catgorical variable with only one point per category.
+
+Need to pre-summarise data
+
+```{r}
+by_country <- organdata %>% group_by(consent.law, country) %>%
+    summarize(don.rate = mean(donors, na.rm = TRUE),
+              don.sd = sd(donors, na.rm = TRUE),
+              gdp = mean(gdp, na.rm = TRUE),
+              health = mean(health, na.rm = TRUE),
+              roads = mean(roads, na.rm = TRUE),
+              cerebvas = mean(cerebvas, na.rm = TRUE))
+by_country
+```
+
+
+```{r}
+p <- ggplot(data = by_country,
+            mapping = aes(x = don.rate,
+                          y = reorder(country, don.rate),
+                          color = consent.law))
+p + 
+  geom_point(size=3) +
+  labs(x="Donor Procurement Rate",
+         y="",
+         color="Consent Law") +
+  scale_color_aaas() +
+  theme(legend.position = "top")
+```
+
+Alternative using facet
+
+```{r fac, fig.height=6, fig.width=6}
+p <- ggplot(data = by_country,
+            mapping = aes(x = don.rate,
+                          y = reorder(country, don.rate)))
+
+p + geom_point(size = 3) +
+  facet_wrap(~ consent.law, scales = "free_y", ncol = 1) +
+  labs(x = "Donor Procurement Rate",
+       y = "")
+
+
+```
+
+Add bars with e.g. standard deviation
+
+Use `geom_pointrange` and add `sd` measurement from summary table
+
+```{r sd}
+p <- ggplot(by_country, aes(reorder(country, don.rate), don.rate))
+
+p + geom_pointrange(aes(ymin = don.rate - don.sd, ymax = don.rate + don.sd)) +
+  labs(
+    x = "",
+    y = "Donor Procurement Rate"
+  ) +
+  coord_flip() 
+```
+
+#5.2 Plotting Text
+
+##Simple options
+
+```{r text_1}
+p <- ggplot(by_country, aes(roads, don.rate)) +
+  geom_point() +
+  geom_text(aes(x = roads + 1, label = country), hjust = 0) 
+#Roads + 1 moves data off the points
+#hjust = 0 LEFT justifies
+#hjust = 1 RIGHT justifies
+p
+```
+
+Still messy - up the ante
+
+##Text with `ggrepel`
+
+New data
+
+```{r nw_dat}
+library(ggrepel)
+
+elections_historic <- elections_historic
+elections_historic %>% 
+  select(1:7) %>% 
+  head(., n = 15)
+```
+
+A nice plot coming up
+
+```{r pres, fig.width=10, fig.height=10}
+#pre-define labels
+p_title <- "Presidential Elections: Popular & Electoral College Margins"
+p_subtitle <- "1824-2016"
+p_caption <- "Data for 2016 are provisional."
+x_label <- "Winner's share of Popular Vote"
+y_label <- "Winner's share of Electoral College Votes"
+
+#Define the plot
+p <- ggplot(elections_historic, aes(popular_pct, ec_pct, label = winner_label))
+
+p + 
+  geom_hline(yintercept = 0.5, size = 1.4, color = "grey80") +  #50% x and y lines
+  geom_vline(xintercept = 0.5, size = 1.4, color = "grey80") +
+  geom_point() +
+  geom_text_repel() +
+  scale_x_continuous(labels = scales::percent) +
+  scale_y_continuous(labels = scales::percent) +
+  labs(
+    x = x_label,
+    y = y_label,
+    title = p_title,
+    subtitle = p_subtitle,
+    caption = p_caption) +
+  theme(text = element_text(size = 12, family = "Roboto"),
+        plot.subtitle = element_text(color="#666666", size = 14),
+        plot.title = element_text(family="Roboto Condensed", face = "bold", size = 18, hjust = 0),
+        plot.caption = element_text(color="#AAAAAA", size=10))
+```
+
+
+
+
+
+
+
