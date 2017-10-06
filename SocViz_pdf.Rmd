@@ -21,17 +21,15 @@ knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE, dev = "cairo_p
 library(socviz)
 library(ggplot2)
 library(ggthemes)
-library(ggsci)
 library(dplyr)
 library(gapminder)
 library(extrafont)
 theme_set(theme_tufte(base_size = 14))
+ubdc_palette <- c("#13AFD6", "#E6E600", "#F07329", "#35B14E", "#D7509A", "#2165AF",
+                  "#BCD032","#866BAC", "#545A5D",  "#7A8082", "#E2D988", "#628DB7",
+                  "#929B9A", "#93B8DA", "#31649B", "#FBF8D0", "#ACB2B4")
 ```
 
-
-```{r set_palette}
-ubdc_palette <- c("#f07818", "#30a848", "#f0f018", "#c0d830", "#d84890", "#9060a8")
-```
 
 
 #Chapter 4.3
@@ -59,7 +57,7 @@ The `facet_wrap()` function is best used when you want a series of small multipl
 ```{r}
 p <- ggplot(data = diamonds, mapping = aes(x = carat, y = price))
 
-p + geom_smooth(alpha = 0.3, color = "navyblue") + 
+p + geom_smooth(color = ubdc_palette[14]) + 
   facet_grid(cut ~ color)  #or (~ cut + color) or (cut ~ color + clarity) 
 
 ```
@@ -108,33 +106,35 @@ ubdc_colours <- p +
   theme(legend.position = "bottom",
         plot.subtitle = element_text(color="#666666"),
         plot.caption = element_text(color="#AAAAAA", size=10)) +
-  scale_fill_manual(values = ubdc_palette)
+  scale_fill_manual(values = ubdc_palette, na.value = ubdc_palette[6])
 ubdc_colours
 ```
 
 #4. 7 Histograms and Freqpoly
-##Basic hist and grouping
+
 
 ```{r mid}
 midwest <- midwest
-#midwest built in to ggplot - good to see it in Rstudio View()
+midwest %>% 
+  slice(1:10) %>% 
+  select(1:8) #for pdf viewing
 ```
 
-
+##Basic histogram
 
 ```{r midwest}
 ggplot(midwest, aes(area)) +
   geom_histogram(bins = 10)
 ```
 
-Hist on plot
+##Grouped histogram (with selected palette colours)
 
 ```{r hist_2}
 midwest %>% 
   filter(state %in% c("OH", "WI")) %>% 
   ggplot(aes(percollege, fill = state)) +
-  geom_histogram(alpha = 0.4, bins = 20) +
-  scale_fill_aaas()
+  geom_histogram(bins = 20) +
+  scale_fill_manual(values = ubdc_palette[c(1, 5)]) 
 ```
 
 ##Kernal density plots
@@ -150,8 +150,8 @@ ggplot(midwest, aes(area)) +
 
 ```{r multi}
 ggplot(midwest, aes(area, fill = state, color = state)) +
-  geom_density(alpha = 0.3) +
-  scale_fill_aaas()
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = ubdc_palette)
 
 #alternative
 # ... aes(area, color = state)) +
@@ -164,8 +164,8 @@ ggplot(midwest, aes(area, fill = state, color = state)) +
 
 ```{r prop_dens}
 ggplot(midwest, aes(area, fill = state, color = state)) +
-  geom_density(alpha = 0.3, aes(y = ..scaled..)) +
-  scale_fill_aaas()
+  geom_density(alpha = 0.4, aes(y = ..scaled..)) +
+  scale_fill_manual(values = ubdc_palette)
 ```
 
 tidy up
@@ -180,7 +180,7 @@ rm(list = c("midwest", "p", "rel_by_region", "ubdc_colours"))
 organdata <- organdata
 organdata %>% 
   select(1:7) %>% 
-  head(., n = 15)
+  head(., n = 10)
 ```
 
 ##Ordered boxplot
@@ -200,7 +200,7 @@ The reorder() function takes two required arguments. The first is the categorica
 ```{r}
 p <- ggplot(organdata, aes(x = reorder(country, donors, na.rm = TRUE),
                            y = donors, fill = world))
-p + geom_violin() +
+p + geom_boxplot() +
   labs(x = NULL, 
        y = "Donors",
        title = "Distribution of Organ Donors 1991 - 2002",
@@ -208,7 +208,7 @@ p + geom_violin() +
        caption = "Using theme_hc()", 
        fill = "Economic classification") +
   coord_flip() +
-  scale_fill_manual(values = ubdc_palette) +
+  scale_fill_manual(values = ubdc_palette, na.value = ubdc_palette[4]) +
   theme(legend.position = "bottom",
         plot.subtitle = element_text(color="#666666"),
         plot.title = element_text(family="Roboto Condensed", face = "bold"),
@@ -227,7 +227,7 @@ p <- ggplot(data = organdata,
 p + geom_jitter(position = position_jitter(width=0.15)) +
   labs(x=NULL) +
   coord_flip() +
-  scale_color_manual(values = ubdc_palette) +
+  scale_color_manual(values = ubdc_palette, na.value = ubdc_palette[4]) +
   theme(legend.position = "top")
 ```
 
@@ -262,7 +262,7 @@ p +
   labs(x="Donor Procurement Rate",
          y="",
          color="Consent Law") +
-  scale_color_aaas() +
+  scale_color_manual(values = ubdc_palette[c(1,5)]) +
   theme(legend.position = "top") +
   theme(panel.grid.major.y = element_line(color = "grey80", size = 0.1)) #optional
 ```
@@ -392,7 +392,7 @@ ggplot(organdata, aes(roads, donors, color = ind)) + #color by dummy variable
   geom_text_repel(data = organdata %>% filter(ind == TRUE),
                   mapping = aes(label = ccode)) +
   guides(color = FALSE) +
-  scale_color_lancet()
+  scale_color_manual(values = ubdc_palette[c(1,5)])
 
 ```
 
@@ -415,7 +415,7 @@ ggplot(organdata, aes(roads, donors)) +
 ggplot(organdata, aes(roads, donors)) +
   geom_point() +
   annotate(geom = "rect", xmin = 125, xmax = 155,
-           ymin = 30, ymax = 35, fill = "#5F559BFF", alpha = 0.1) +
+           ymin = 30, ymax = 35, fill = ubdc_palette[6], alpha = 0.6) +
   annotate(geom = "text", label = "A suprisingly high \n recovery rate", x = 157, y = 33,
              fontfamily = "Roboto Condensed", hjust = 0) 
 
