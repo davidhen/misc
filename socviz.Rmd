@@ -58,7 +58,7 @@ The `facet_wrap()` function is best used when you want a series of small multipl
 ```{r}
 p <- ggplot(data = diamonds, mapping = aes(x = carat, y = price))
 
-p + geom_smooth(alpha = 0.3, color = "navyblue") + 
+p + geom_smooth(alpha = 0.3, color = "#d84890") + 
   facet_grid(cut ~ color)  #or (~ cut + color) or (cut ~ color + clarity) 
 
 ```
@@ -132,8 +132,8 @@ Hist on plot
 midwest %>% 
   filter(state %in% c("OH", "WI")) %>% 
   ggplot(aes(percollege, fill = state)) +
-  geom_histogram(alpha = 0.4, bins = 20) +
-  scale_fill_aaas()
+  geom_histogram(bins = 20) +
+  scale_fill_manual(values = ubdc_palette)
 ```
 
 ##Kernal density plots
@@ -149,8 +149,8 @@ ggplot(midwest, aes(area)) +
 
 ```{r multi}
 ggplot(midwest, aes(area, fill = state, color = state)) +
-  geom_density(alpha = 0.3) +
-  scale_fill_aaas()
+  geom_density(alpha = 0.5) +
+  scale_fill_manual(values = ubdc_palette)
 
 #alternative
 # ... aes(area, color = state)) +
@@ -163,8 +163,8 @@ ggplot(midwest, aes(area, fill = state, color = state)) +
 
 ```{r prop_dens}
 ggplot(midwest, aes(area, fill = state, color = state)) +
-  geom_density(alpha = 0.3, aes(y = ..scaled..)) +
-  scale_fill_aaas()
+  geom_density(alpha = 0.1, aes(y = ..scaled..)) +
+  scale_fill_manual(values = ubdc_palette)
 ```
 
 tidy up
@@ -199,7 +199,7 @@ The reorder() function takes two required arguments. The first is the categorica
 ```{r}
 p <- ggplot(organdata, aes(x = reorder(country, donors, na.rm = TRUE),
                            y = donors, fill = world))
-p + geom_violin() +
+p + geom_boxplot() +
   labs(x = NULL, 
        y = "Donors",
        title = "Distribution of Organ Donors 1991 - 2002",
@@ -261,7 +261,7 @@ p +
   labs(x="Donor Procurement Rate",
          y="",
          color="Consent Law") +
-  scale_color_aaas() +
+  scale_color_manual(values = ubdc_palette) +
   theme(legend.position = "top") +
   theme(panel.grid.major.y = element_line(color = "grey80", size = 0.1)) #optional
 ```
@@ -391,7 +391,7 @@ ggplot(organdata, aes(roads, donors, color = ind)) + #color by dummy variable
   geom_text_repel(data = organdata %>% filter(ind == TRUE),
                   mapping = aes(label = ccode)) +
   guides(color = FALSE) +
-  scale_color_lancet()
+  scale_color_manual(values = ubdc_palette)
 
 ```
 
