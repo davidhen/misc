@@ -18,7 +18,7 @@ ubdc_palette <- ubdc_palette[ubdc_palette != "#FFFFFF"]
 
 ubdc_palette <- c("#13AFD6", "#E6E600", "#F07329", "#35B14E", "#D7509A", "#2165AF",
                   "#BCD032","#866BAC", "#545A5D",  "#7A8082", "#E2D988", "#628DB7",
-                  "#929B9A", "#93B8DA", "#31649B", "#FBF8D0", "#ACB2B4")
+                  "#929B9A", "#93B8DA", "#31649B", "#FBF8D0", "#ACB2B4", "#D1DAE2")
 
 #Dropped another 2 colours that were too "white". 
 

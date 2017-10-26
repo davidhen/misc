@@ -10,7 +10,7 @@ byte_compile <- function(package) {
 
 
 
-byte_compile(c("doParallel", "dplyr", "ggrepel", "ggsci", "memisc", "odbc"))
+byte_compile(c("corrplot", "data.table", "irlba", "purrr", "RcppArmadillo", "rex", "rJava", "tidyr", "tidyselect"))
 
 #Alternative
 
